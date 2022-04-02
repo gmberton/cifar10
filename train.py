@@ -32,11 +32,12 @@ logging.info(f"Arguments: {args}")
 logging.info(f"The outputs are being saved in {output_folder}")
 
 #### DATASETS & DATALOADERS
+OUT_SIZE = 64 if args.backbone == "alexnet" else 32
 transform = T.Compose([
         T.ToTensor(),
         T.ColorJitter(0.4, 0.4, 0.4, 0.1),
         T.RandomHorizontalFlip(),
-        T.RandomResizedCrop(32, scale=(0.8, 1)),
+        T.RandomResizedCrop(OUT_SIZE, scale=(0.8, 1)),
         T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
