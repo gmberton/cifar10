@@ -12,10 +12,12 @@ from torch.utils.data import Subset
 import commons
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument("--backbone", type=str, default="alexnet", choices=["alexnet", "resnet18"], help="_")
+parser.add_argument("--lr", type=float, default=0.001, help="_")
 parser.add_argument("--device", type=str, default="cuda", choices=["cuda", "cpu"], help="_")
 parser.add_argument("--batch_size", type=int, default=16, help="_")
 parser.add_argument("--num_workers", type=int, default=3, help="_")
-parser.add_argument("--epochs_num", type=int, default=20, help="_")
+parser.add_argument("--epochs_num", type=int, default=100, help="_")
 parser.add_argument("--seed_weights", type=int, default=0, help="_")
 parser.add_argument("--seed_optimization", type=int, default=0, help="_")
 parser.add_argument("--save_dir", type=str, default="default", help="_")
@@ -57,9 +59,13 @@ test_loader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size,
                                           pin_memory=(args.device == "cuda"))
 
 #### MODEL & CRITERION & OPTIMIZER
-model = torchvision.models.resnet18(pretrained=False).to(args.device)
+if args.backbone == "alexnet":
+    model = torchvision.models.alexnet(pretrained=False).to(args.device)
+if args.backbone == "resnet18":
+    model = torchvision.models.resnet18(pretrained=False).to(args.device)
+
 criterion = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9)
 
 #### RUN EPOCHS
 best_accuracy = 0
@@ -86,10 +92,10 @@ for epoch in range(args.epochs_num):
             accuracy.update(outputs, labels)
             _, predicted = torch.max(outputs.data, 1)
     
-    accuracy = accuracy.compute().item()
+    accuracy = int(accuracy.compute().item() * 100)
     best_accuracy = max(accuracy, best_accuracy)
     logging.debug(f"Epoch: {epoch + 1:02d}/{args.epochs_num}; loss: {running_loss.compute().item():.3f}; " +
-                  f"accuracy: {int(100 * accuracy)} %")
+                  f"accuracy: {accuracy} %")
 
-logging.info(f"Training took {str(datetime.now() - start_time)[:-7]}, best_accuracy: {int(best_accuracy)}")
+logging.info(f"Training took {str(datetime.now() - start_time)[:-7]}, best_accuracy: {best_accuracy}")
 
