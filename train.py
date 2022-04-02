@@ -10,21 +10,19 @@ import torchvision.transforms as T
 from torch.utils.data import Subset
 
 import commons
-import augmentations
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument("--augmentation_device", type=str, default="cuda",
-                    choices=["cuda_parallel", "cuda", "cpu"], help="_")
 parser.add_argument("--device", type=str, default="cuda", choices=["cuda", "cpu"], help="_")
 parser.add_argument("--batch_size", type=int, default=16, help="_")
 parser.add_argument("--num_workers", type=int, default=3, help="_")
-parser.add_argument("--epochs_num", type=int, default=50, help="_")
+parser.add_argument("--epochs_num", type=int, default=20, help="_")
 parser.add_argument("--seed_weights", type=int, default=0, help="_")
 parser.add_argument("--seed_optimization", type=int, default=0, help="_")
 parser.add_argument("--save_dir", type=str, default="default", help="_")
 
 args = parser.parse_args()
-output_folder = f"logs/{args.save_dir}/{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
+start_time = datetime.now()
+output_folder = f"logs/{args.save_dir}/{start_time.strftime('%Y-%m-%d_%H-%M-%S')}"
 commons.make_deterministic(args.seed_optimization)
 commons.setup_logging(output_folder, console="debug")
 logging.info(" ".join(sys.argv))
@@ -32,32 +30,15 @@ logging.info(f"Arguments: {args}")
 logging.info(f"The outputs are being saved in {output_folder}")
 
 #### DATASETS & DATALOADERS
-if args.augmentation_device == "cpu":
-    transform = T.Compose([
-            T.ToTensor(),
-            T.ColorJitter(0.4, 0.4, 0.4, 0.1),
-            T.RandomHorizontalFlip(),
-            T.RandomResizedCrop(32, scale=(0.8, 1)),
-            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ])
-elif args.augmentation_device == "cuda":
-    transform = T.Compose([])
-    gpu_augmentation = T.Compose([
-            augmentations.DeviceAgnosticColorJitter(0.4, 0.4, 0.4, 0.1),
-            augmentations.DeviceAgnosticRandomResizedCrop(32, scale=(0.8, 1)),
-            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ])
-elif args.augmentation_device == "cuda_parallel":
-    transform = T.Compose([])
-    gpu_augmentation = T.Compose([
-            T.ToTensor(),
-            T.ColorJitter(0.4, 0.4, 0.4, 0.1),
-            T.RandomHorizontalFlip(),
-            T.RandomResizedCrop(32, scale=(0.8, 1)),
-            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ])
+transform = T.Compose([
+        T.ToTensor(),
+        T.ColorJitter(0.4, 0.4, 0.4, 0.1),
+        T.RandomHorizontalFlip(),
+        T.RandomResizedCrop(32, scale=(0.8, 1)),
+        T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
 
-torchvision.datasets.ImageFolder()
+# torchvision.datasets.ImageFolder()
 train_val_set = torchvision.datasets.CIFAR10(root='./data', train=True,
                                              download=True, transform=transform)
 train_set = Subset(train_val_set, range(40000))
@@ -76,21 +57,17 @@ test_loader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size,
                                           pin_memory=(args.device == "cuda"))
 
 #### MODEL & CRITERION & OPTIMIZER
-model = torchvision.models.resnet18(pretrained=True).to(args.device)
+model = torchvision.models.resnet18(pretrained=False).to(args.device)
 criterion = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
 #### RUN EPOCHS
+best_accuracy = 0
 for epoch in range(args.epochs_num):
     #### TRAIN
     running_loss = torchmetrics.MeanMetric()
     for images, labels in train_loader:
         images = images.to(args.device)
-        if args.augmentation_device == "cuda":
-            images = gpu_augmentation(images)
-        elif args.augmentation_device == "cuda_parallel":
-            images = gpu_augmentation(images)
-        
         labels = labels.to(args.device)
         optimizer.zero_grad()
         outputs = model(images)
@@ -109,6 +86,10 @@ for epoch in range(args.epochs_num):
             accuracy.update(outputs, labels)
             _, predicted = torch.max(outputs.data, 1)
     
-    logging.info(f"Epoch: {epoch + 1:02d}/{args.epochs_num}; loss: {running_loss.compute().item():.3f}; " +
-                 f"accuracy: {int(100 * accuracy.compute().item())} %")
+    accuracy = accuracy.compute().item()
+    best_accuracy = max(accuracy, best_accuracy)
+    logging.debug(f"Epoch: {epoch + 1:02d}/{args.epochs_num}; loss: {running_loss.compute().item():.3f}; " +
+                  f"accuracy: {int(100 * accuracy)} %")
+
+logging.info(f"Training took {str(datetime.now() - start_time)[:-7]}, best_accuracy: {int(best_accuracy)}")
 
