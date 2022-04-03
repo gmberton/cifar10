@@ -13,20 +13,18 @@ import commons
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("--lr", type=float, default=0.01, help="_")
-parser.add_argument("--momentum", type=float, default=0.9, help="_")
-parser.add_argument("--weight_decay", type=float, default=0.0001, help="_")
 parser.add_argument("--device", type=str, default="cuda", choices=["cuda", "cpu"], help="_")
 parser.add_argument("--batch_size", type=int, default=64, help="_")
 parser.add_argument("--num_workers", type=int, default=3, help="_")
 parser.add_argument("--epochs_num", type=int, default=100, help="_")
 parser.add_argument("--seed_weights", type=int, default=0, help="_")
 parser.add_argument("--seed_optimization", type=int, default=0, help="_")
-parser.add_argument("--save_dir", type=str, default="default", help="_") # TODO remove
+# parser.add_argument("--save_dir", type=str, default="default", help="_")
 
 args = parser.parse_args()
 start_time = datetime.now()
-output_folder = f"logs/{args.save_dir}/{start_time.strftime('%Y-%m-%d_%H-%M-%S')}"
-# output_folder = f"logs/sw_{args.seed_weights:02d}__so_{args.seed_optimization:02d}" # TODO update
+# output_folder = f"logs/{args.save_dir}/{start_time.strftime('%Y-%m-%d_%H-%M-%S')}"
+output_folder = f"logs/sw_{args.seed_weights:02d}__so_{args.seed_optimization:02d}"
 commons.make_deterministic(args.seed_optimization)
 commons.setup_logging(output_folder, console="debug")
 logging.info(" ".join(sys.argv))
@@ -61,14 +59,11 @@ test_loader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size,
 
 #### MODEL & CRITERION & OPTIMIZER
 model = torchvision.models.resnet18(pretrained=False)
-# model.load_state_dict(torch.load(f"models/{args.seed_weights:02d}.pth"))
+model.load_state_dict(torch.load(f"models/{args.seed_weights:02d}.pth"))
 model = model.to(args.device)
 
 criterion = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(model.parameters(),
-                            lr=args.lr,
-                            momentum=args.momentum,
-                            weight_decay=args.weight_decay)
+optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9)
 
 #### RUN EPOCHS
 best_val_accuracy = 0
