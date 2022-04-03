@@ -20,14 +20,17 @@ source /home/gabriele/iccv_tutto/myenv/bin/activate
 python {folder}/train.py --save_dir SAVE_DIR PARAMS
 """
 
-for batch_size in [16, 32, 64, 128]:
-    for lr in [1, 0.1, 0.01, 0.001]:
-        save_dir = f"ab1_bs{batch_size:02d}_lr{lr}"
-        filename = f"{folder}/jobs/{save_dir}.job"
-        content = CONTENT.replace("SAVE_DIR", save_dir)\
-                         .replace("PARAMS", f"--batch_size {batch_size} --lr {lr}")
-        with open(filename, "w") as file:
-            _ = file.write(content)
-        _ = os.system(f"sbatch {filename}")
-        print(f"sbatch {filename}")
+for lr in [0.1, 0.01]:
+    for momentum in [0.9, 0.99]:
+        for weight_decay in [0.001, 0.0001, 0.00001]:
+            save_dir = f"ab2_lr{lr}_mo{momentum}_wd{weight_decay}"
+            if os.path.exists(f"logs/{save_dir}"):
+                continue
+            filename = f"{folder}/jobs/{save_dir}.job"
+            content = CONTENT.replace("SAVE_DIR", save_dir)\
+                             .replace("PARAMS", f"--lr {lr} --momentum {momentum} --weight_decay {weight_decay}")
+            with open(filename, "w") as file:
+                _ = file.write(content)
+            _ = os.system(f"sbatch {filename}")
+            print(f"sbatch {filename}")
 
