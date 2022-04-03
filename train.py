@@ -25,7 +25,8 @@ parser.add_argument("--save_dir", type=str, default="default", help="_") # TODO 
 
 args = parser.parse_args()
 start_time = datetime.now()
-output_folder = f"logs/sw_{args.seed_weights:02d}__so_{args.seed_optimization:02d}"
+output_folder = f"logs/{args.save_dir}/{start_time.strftime('%Y-%m-%d_%H-%M-%S')}"
+# output_folder = f"logs/sw_{args.seed_weights:02d}__so_{args.seed_optimization:02d}" # TODO update
 commons.make_deterministic(args.seed_optimization)
 commons.setup_logging(output_folder, console="debug")
 logging.info(" ".join(sys.argv))
