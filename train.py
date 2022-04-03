@@ -12,8 +12,7 @@ from torch.utils.data import Subset
 import commons
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument("--backbone", type=str, default="alexnet", choices=["alexnet", "resnet18"], help="_")
-parser.add_argument("--lr", type=float, default=0.001, help="_")
+parser.add_argument("--lr", type=float, default=0.01, help="_")
 parser.add_argument("--device", type=str, default="cuda", choices=["cuda", "cpu"], help="_")
 parser.add_argument("--batch_size", type=int, default=16, help="_")
 parser.add_argument("--num_workers", type=int, default=3, help="_")
@@ -32,12 +31,11 @@ logging.info(f"Arguments: {args}")
 logging.info(f"The outputs are being saved in {output_folder}")
 
 #### DATASETS & DATALOADERS
-OUT_SIZE = 64 if args.backbone == "alexnet" else 32
 transform = T.Compose([
         T.ToTensor(),
         T.ColorJitter(0.4, 0.4, 0.4, 0.1),
         T.RandomHorizontalFlip(),
-        T.RandomResizedCrop(OUT_SIZE, scale=(0.8, 1)),
+        T.RandomResizedCrop(32, scale=(0.8, 1)),
         T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
@@ -60,10 +58,7 @@ test_loader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size,
                                           pin_memory=(args.device == "cuda"))
 
 #### MODEL & CRITERION & OPTIMIZER
-if args.backbone == "alexnet":
-    model = torchvision.models.alexnet(pretrained=False).to(args.device)
-if args.backbone == "resnet18":
-    model = torchvision.models.resnet18(pretrained=False).to(args.device)
+model = torchvision.models.resnet18(pretrained=False).to(args.device)
 
 criterion = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9)
