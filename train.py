@@ -117,6 +117,6 @@ with torch.no_grad():
 test_accuracy = test_accuracy.compute().item() * 100
 
 logging.info(f"Training took {str(datetime.now() - start_time)[:-7]}; " +
-             f"best_val_accuracy: {best_val_accuracy}; " +
-             f"test_accuracy: {test_accuracy}; ")
+             f"best_val_accuracy: {best_val_accuracy:.1f}; " +
+             f"test_accuracy: {test_accuracy:.1f}")
 
