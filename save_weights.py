@@ -12,5 +12,5 @@ args = parser.parse_args()
 model = torchvision.models.resnet18(pretrained=False)
 
 os.makedirs("models", exist_ok=True)
-torch.save(model, f"models/{args.seed_weights:02d}.pth")
+torch.save(model.state_dict(), f"models/{args.seed_weights:02d}.pth")
 
