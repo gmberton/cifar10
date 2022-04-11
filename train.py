@@ -95,8 +95,8 @@ for epoch in range(args.epochs_num):
         best_val_accuracy = val_accuracy
     logging.debug(f"Epoch: {epoch + 1:02d}/{args.epochs_num}; " +
                   f"loss: {running_loss.compute().item():.3f}; " +
-                  f"val_accuracy: {val_accuracy:.1f}%; " +
-                  f"best_val_accuracy: {best_val_accuracy:.1f}%")
+                  f"val_accuracy: {val_accuracy:.2f}%; " +
+                  f"best_val_accuracy: {best_val_accuracy:.2f}%")
 
 #### TEST with best model
 model.load_state_dict(torch.load(f"{output_folder}/best_model.pth"))
@@ -112,6 +112,6 @@ with torch.no_grad():
 test_accuracy = test_accuracy.compute().item() * 100
 
 logging.info(f"Training took {str(datetime.now() - start_time)[:-7]}; " +
-             f"best_val_accuracy: {best_val_accuracy:.1f}; " +
-             f"test_accuracy: {test_accuracy:.1f}")
+             f"best_val_accuracy: {best_val_accuracy:.2f}; " +
+             f"test_accuracy: {test_accuracy:.2f}")
 
