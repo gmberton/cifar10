@@ -21,9 +21,9 @@ for w in range(10):
     for o in range(10):
         log = f"logs/sw_{w:02d}__so_{o:02d}/info.log"
         lines = c.readlines(log)
-        # acc = c.get_matches("best_val_accuracy: (\d\d\.\d)", lines)[0]
-        acc = c.get_matches("test_accuracy: (\d\d\.\d)", lines)[0]
-        S += f" {acc} |"
+        # acc = c.get_matches("best_val_accuracy: (\d\d\.\d\d)", lines)[0]
+        acc = c.get_matches("test_accuracy: (\d\d\.\d\d)", lines)[0]
+        S += f" {acc}|"
         mat[w, o] = acc
     S += f" {mat[w, :].mean():.2f} |\n"
 
