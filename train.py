@@ -9,10 +9,12 @@ from datetime import datetime
 import torchvision.transforms as T
 from torch.utils.data import Subset
 
+import models
 import commons
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("--lr", type=float, default=0.01, help="_")
+parser.add_argument("--model", type=float, default="r9", choices=["r9", "r18"], help="_")
 parser.add_argument("--device", type=str, default="cuda", choices=["cuda", "cpu"], help="_")
 parser.add_argument("--batch_size", type=int, default=64, help="_")
 parser.add_argument("--num_workers", type=int, default=3, help="_")
@@ -58,8 +60,12 @@ test_loader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size,
                                           pin_memory=(args.device == "cuda"))
 
 #### MODEL & CRITERION & OPTIMIZER
-model = torchvision.models.resnet18(pretrained=False)
-model.load_state_dict(torch.load(f"models/{args.seed_weights:02d}.pth"))
+if args.model == "r18":
+    model = torchvision.models.resnet18(pretrained=False)
+elif args.model == "r9":
+    model = models.build_network()
+
+model.load_state_dict(torch.load(f"models_{args.model}/{args.seed_weights:02d}.pth"))
 model = model.to(args.device)
 
 criterion = torch.nn.CrossEntropyLoss()
