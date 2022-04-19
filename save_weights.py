@@ -8,7 +8,7 @@ import models
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("--seed_weights", type=int, default=0, help="_")
-parser.add_argument("--model", type=float, default="r9", choices=["r9", "r18"], help="_")
+parser.add_argument("--model", type=str, default="r9", choices=["r9", "r18"], help="_")
 
 args = parser.parse_args()
 

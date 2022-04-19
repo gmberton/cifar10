@@ -14,7 +14,7 @@ import commons
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("--lr", type=float, default=0.01, help="_")
-parser.add_argument("--model", type=float, default="r9", choices=["r9", "r18"], help="_")
+parser.add_argument("--model", type=str, default="r9", choices=["r9", "r18"], help="_")
 parser.add_argument("--device", type=str, default="cuda", choices=["cuda", "cpu"], help="_")
 parser.add_argument("--batch_size", type=int, default=64, help="_")
 parser.add_argument("--num_workers", type=int, default=3, help="_")
