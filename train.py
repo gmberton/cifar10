@@ -9,6 +9,7 @@ from datetime import datetime
 import torchvision.transforms as T
 from torch.utils.data import Subset
 
+import loss
 import models
 import commons
 
@@ -21,11 +22,9 @@ parser.add_argument("--num_workers", type=int, default=3, help="_")
 parser.add_argument("--epochs_num", type=int, default=100, help="_")
 parser.add_argument("--seed_weights", type=int, default=0, help="_")
 parser.add_argument("--seed_optimization", type=int, default=0, help="_")
-# parser.add_argument("--save_dir", type=str, default="default", help="_")
 
 args = parser.parse_args()
 start_time = datetime.now()
-# output_folder = f"logs/{args.save_dir}/{start_time.strftime('%Y-%m-%d_%H-%M-%S')}"
 output_folder = f"logs/sw_{args.seed_weights:02d}__so_{args.seed_optimization:02d}"
 commons.make_deterministic(args.seed_optimization)
 commons.setup_logging(output_folder, console="debug")
@@ -69,7 +68,18 @@ model.load_state_dict(torch.load(f"models_{args.model}/{args.seed_weights:02d}.p
 model = model.to(args.device)
 
 criterion = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9)
+criterion2 = loss.CrossEntropyLabelSmooth(num_classes=10, epsilon=0.2)
+if args.model == "r18":
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+else:
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.2, momentum=0.9, nesterov=True, weight_decay=0.001)
+
+def lr(e):
+    if e < 4:
+        return 0.5*e/3. + 0.01
+    return 0.5*(22-e)/19. + 0.01
+
+sched = torch.optim.lr_scheduler.LambdaLR(optimizer, lr)
 
 #### RUN EPOCHS
 best_val_accuracy = 0
@@ -85,6 +95,7 @@ for epoch in range(args.epochs_num):
         loss.backward()
         optimizer.step()
         running_loss.update(loss.item())
+    sched.step()
     
     #### VALIDATION
     val_accuracy = torchmetrics.Accuracy().cuda()
